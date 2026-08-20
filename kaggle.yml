@@ -1,15 +1,15 @@
-# Project deployment manifest.  Kaggle consumes notebooks/kernel-metadata.json;
-# this file records the immutable artifact and exact CLI invocation together.
+# Project deployment manifest. Kaggle consumes the root kernel-metadata.json;
+# the notebook itself lives under notebooks/.
 kernel:
-  directory: notebooks
-  metadata: notebooks/kernel-metadata.json
+  directory: .
+  metadata: kernel-metadata.json
   notebook: notebooks/ship_motion_kaggle.ipynb
   id: kushchaudhari/ship-motion-leakage-free-benchmark
   accelerator: gpu
   timeout_seconds: 43200
   private: true
   internet: true
-  push_command: kaggle kernels push -p notebooks --accelerator gpu --timeout 43200
+  push_command: kaggle kernels push -p . --accelerator gpu --timeout 43200
 
 artifacts:
   dataset: kushchaudhari/ship-motion-reimplementation-artifacts

@@ -19,10 +19,18 @@ the default global Kaggle CLI configuration.
 
    ```bash
    ./scripts/kaggle.sh datasets status kushchaudhari/ship-motion-reimplementation-artifacts
-   ./scripts/kaggle.sh kernels push -p notebooks --accelerator gpu --timeout 43200
+   ./scripts/kaggle.sh kernels push -p . --accelerator gpu --timeout 43200
    ```
 
 The first account used for an existing private dataset or private kernel must
 have access to those resources. To transfer ownership, create a new private
 dataset/kernel from the new account and update `kaggle.yml` and
-`notebooks/kernel-metadata.json` with the new account slug.
+`kernel-metadata.json` with the new account slug.
+
+The root metadata enables Internet because the notebook clones the public
+repository during setup. To capture the live execution log without exposing
+credentials, run:
+
+```bash
+python scripts/watch_kaggle_run.py --slug kushchaudhari/ship-motion-leakage-free-benchmark
+```
