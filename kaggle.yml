@@ -1,0 +1,24 @@
+# Project deployment manifest.  Kaggle consumes notebooks/kernel-metadata.json;
+# this file records the immutable artifact and exact CLI invocation together.
+kernel:
+  directory: notebooks
+  metadata: notebooks/kernel-metadata.json
+  notebook: notebooks/ship_motion_kaggle.ipynb
+  id: kushchaudhari/ship-motion-leakage-free-benchmark
+  accelerator: gpu
+  timeout_seconds: 43200
+  private: true
+  internet: true
+  push_command: kaggle kernels push -p notebooks --accelerator gpu --timeout 43200
+
+artifacts:
+  dataset: kushchaudhari/ship-motion-reimplementation-artifacts
+  input_mount: /kaggle/input/ship-motion-reimplementation-artifacts
+  output_root: /kaggle/working/ship-motion-artifacts
+  reuse_check: python scripts/check_cached_stage.py primary
+
+workflow:
+  # The notebook restores only verified artifacts, then reuses or regenerates
+  # the primary benchmark with the immutable M0-M2 manifests.
+  stage: primary_m3_m7
+  upload_results_command: kaggle datasets version -p /kaggle/working/ship-motion-artifacts --message "ship-motion artifact update"

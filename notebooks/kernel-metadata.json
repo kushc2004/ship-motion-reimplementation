@@ -1,0 +1,16 @@
+{
+  "id": "kushchaudhari/ship-motion-leakage-free-benchmark",
+  "title": "Ship Motion Leakage-Free Benchmark",
+  "code_file": "ship_motion_kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_internet": "true",
+  "dataset_sources": [
+    "kushchaudhari/ship-motion-reimplementation-artifacts"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": []
+}
