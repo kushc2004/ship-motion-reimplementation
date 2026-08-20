@@ -4,6 +4,11 @@ __pycache__/
 .pytest_cache/
 .venv*/
 
+# Project-local Kaggle CLI credentials.  The wrapper in scripts/kaggle.sh
+# points KAGGLE_CONFIG_DIR here, so this repository can use a different
+# Kaggle account without changing the user's global CLI configuration.
+.kaggle/
+
 # Reproducible source data and immutable manifests are versioned.  Generated
 # benchmark/model outputs are intentionally local so no legacy metric is
 # republished as a new result.
