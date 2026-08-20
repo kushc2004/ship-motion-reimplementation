@@ -5,11 +5,11 @@ kernel:
   metadata: kernel-metadata.json
   notebook: notebooks/ship_motion_kaggle.ipynb
   id: kushchaudhari/ship-motion-leakage-free-benchmark
-  accelerator: gpu
+  accelerator: NvidiaTeslaT4
   timeout_seconds: 43200
   private: true
   internet: true
-  push_command: kaggle kernels push -p . --accelerator gpu --timeout 43200
+  push_command: kaggle kernels push -p . --timeout 43200
 
 artifacts:
   dataset: kushchaudhari/ship-motion-reimplementation-artifacts

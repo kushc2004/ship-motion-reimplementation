@@ -19,7 +19,7 @@ the default global Kaggle CLI configuration.
 
    ```bash
    ./scripts/kaggle.sh datasets status kushchaudhari/ship-motion-reimplementation-artifacts
-   ./scripts/kaggle.sh kernels push -p . --accelerator gpu --timeout 43200
+   ./scripts/kaggle.sh kernels push -p . --timeout 43200
    ```
 
 The first account used for an existing private dataset or private kernel must
