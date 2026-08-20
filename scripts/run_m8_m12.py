@@ -19,6 +19,9 @@ from shipmotion.artifacts import cached_stage_status
 def dump(value, path):
     path.parent.mkdir(parents=True, exist_ok=True); path.write_text(json.dumps(value, indent=2) + "\n")
 
+def complete(*names):
+    return all((OUT/name).is_file() for name in names)
+
 def ablations():
     """M8: RF is fixed; only features vary and no test result chooses a model."""
     rows=[]; frames=[]
@@ -141,7 +144,23 @@ def main():
         return
     if not status["complete"]:
         print(f"M8--M11 cache unavailable: {status['reason']}; running experiments.")
-    OUT.mkdir(parents=True,exist_ok=True);dump(verify_frozen_inputs(ROOT, OUTPUT_ROOT),OUT/"frozen_input_verification_before.json");dump({"python":platform.python_version(),"torch":torch.__version__,"mps_available":torch.backends.mps.is_available()},OUT/"environment.json")
-    print("M8 feature ablations",flush=True);ablations();print("M9 speed-held-out evaluation",flush=True);loso();print("M10 multi-task experiments",flush=True);r=[train_mtt(.5,"single_task"),train_mtt(.5,"score"),train_mtt(.5,"multitask"),train_mtt(.2,"multitask")];dump(r,OUT/"m10_multitask_summary.json");print("M11 phase analysis",flush=True);dump(phase_analysis(),OUT/"m11_phase_summary.json");dump(verify_frozen_inputs(ROOT, OUTPUT_ROOT),OUT/"frozen_input_verification_after.json");print("M8--M11 complete",flush=True)
+    OUT.mkdir(parents=True,exist_ok=True);dump(verify_frozen_inputs(ROOT, OUTPUT_ROOT),OUT/"frozen_input_verification_before.json");dump({"python":platform.python_version(),"torch":torch.__version__,"mps_available":torch.backends.mps.is_available(),"cuda_available":torch.cuda.is_available()},OUT/"environment.json")
+    if args.force or not complete("m8_feature_ablation_predictions.parquet","m8_feature_ablations.csv","m8_feature_ablations.json"):
+        print("M8 feature ablations",flush=True);ablations()
+    else: print("M8 feature ablations: reusing complete checkpoint",flush=True)
+    if args.force or not complete("m9_speed_ood.csv","m9_speed_ood.json","m9_speed_ood_predictions.parquet","m9_speed_ood_window_manifests.json"):
+        print("M9 speed-held-out evaluation",flush=True);loso()
+    else: print("M9 speed-held-out evaluation: reusing complete checkpoint",flush=True)
+    print("M10 multi-task experiments",flush=True);r=[]
+    for depth,task in ((.5,"single_task"),(.5,"score"),(.5,"multitask"),(.2,"multitask")):
+        name=f"m10_{task}_{depth:.1f}m";required=(f"{name}_metrics.json",f"{name}_training_history.json",f"{name}_model.pt",f"{name}_predictions.npz",f"{name}_motion_predictions.parquet")
+        if args.force or not complete(*required): r.append(train_mtt(depth,task))
+        else:
+            print(f"{name}: reusing complete checkpoint",flush=True);r.append(json.loads((OUT/f"{name}_metrics.json").read_text()))
+    dump(r,OUT/"m10_multitask_summary.json")
+    if args.force or not complete("m11_phase_lag.csv","m11_phase_summary.json"):
+        print("M11 phase analysis",flush=True);dump(phase_analysis(),OUT/"m11_phase_summary.json")
+    else: print("M11 phase analysis: reusing complete checkpoint",flush=True)
+    dump(verify_frozen_inputs(ROOT, OUTPUT_ROOT),OUT/"frozen_input_verification_after.json");print("M8--M11 complete",flush=True)
 
 if __name__=="__main__": main()

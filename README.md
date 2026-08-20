@@ -8,6 +8,19 @@ Open [`notebooks/ship_motion_kaggle.ipynb`](notebooks/ship_motion_kaggle.ipynb) 
 
 The notebook uses CUDA on Kaggle, Apple MPS on a compatible Mac, and CPU otherwise. Its generated outputs remain outside version control.
 
+For a single resumable M0--M12 command, use the end-to-end orchestrator. It
+reuses only integrity-checked artifacts, writes per-stage logs/status, and never
+rebuilds immutable M0--M2 inputs unless explicitly requested:
+
+```bash
+python scripts/run_end_to_end.py --require-accelerator cuda
+```
+
+On a later Kaggle session, mount/copy the previous artifact dataset to a
+persistent output directory and pass it with `--output-root`. The same command
+will skip verified completed stages. Use `--dry-run` to inspect the execution
+plan, or `--through-stage primary` for M0--M7 only.
+
 ## Reproduce locally
 
 ```bash
