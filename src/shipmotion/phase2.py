@@ -37,8 +37,15 @@ def file_hash(path: Path) -> str:
     return h.hexdigest()
 
 
-def verify_frozen_inputs(root: Path) -> dict:
-    primary = root / "outputs" / "primary_benchmark_m37" / "manifest_hashes.json"
+def verify_frozen_inputs(root: Path, output_root: Path | None = None) -> dict:
+    """Verify M0--M2 inputs against the primary artifact stored in ``output_root``.
+
+    ``output_root`` is configurable so a Kaggle run can restore its prior
+    artifacts from a mounted dataset instead of writing into a freshly cloned
+    repository each time.
+    """
+    output_root = output_root or root / "outputs"
+    primary = output_root / "primary_benchmark_m37" / "manifest_hashes.json"
     expected = json.loads(primary.read_text())
     base = root / "data" / "splits"; got = {}
     for key in expected:

@@ -8,6 +8,11 @@ __pycache__/
 # benchmark/model outputs are intentionally local so no legacy metric is
 # republished as a new result.
 outputs/
+kaggle_artifact_store/primary_benchmark_m37/
+kaggle_artifact_store/m8_m12/
+kaggle_artifact_store/reports/
+kaggle_artifact_store/figures/
+kaggle_artifact_store/cv/
 BTP-2/BTP2_outputs/
 BTP-2/Latex_Report.zip
 BTP-2/Latex_Report/figures/

@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """M8--M11 experiments consuming immutable M0--M7 inputs only."""
 from __future__ import annotations
-import json, platform, sys, time
+import argparse, json, os, platform, sys, time
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
 
-ROOT = Path(__file__).resolve().parents[1]; OUT = ROOT / "outputs" / "m8_m12"; SEED = 42
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT_ROOT = Path(os.environ.get("SHIPMOTION_OUTPUT_ROOT", ROOT / "outputs"))
+OUT = OUTPUT_ROOT / "m8_m12"; SEED = 42
 sys.path.insert(0, str(ROOT / "src"))
 from shipmotion.benchmark import _normalize_x, load_windows, prediction_frame, split_arrays
 from shipmotion.data.pipeline import MOTION_COLUMNS
 from shipmotion.phase2 import MultiTaskTransformer, causal_score, classification_metrics, feature_data, fit_classical, motion_metrics, verify_frozen_inputs
+from shipmotion.artifacts import cached_stage_status
 
 def dump(value, path):
     path.parent.mkdir(parents=True, exist_ok=True); path.write_text(json.dumps(value, indent=2) + "\n")
@@ -119,7 +122,7 @@ def train_mtt(depth,task,max_epochs=12):
     return result
 
 def phase_analysis():
-    p=pd.read_parquet(ROOT/"outputs/primary_benchmark_m37/predictions.parquet");rows=[]
+    p=pd.read_parquet(OUTPUT_ROOT/"primary_benchmark_m37/predictions.parquet");rows=[]
     for (model,dof),g in p[p.split=="test"].groupby(["model","dof"]):
       if dof not in ("heave_m","roll_deg","pitch_deg"): continue
       lags=[]
@@ -129,7 +132,16 @@ def phase_analysis():
     pd.DataFrame(rows).to_csv(OUT/"m11_phase_lag.csv",index=False);return rows
 
 def main():
-    OUT.mkdir(parents=True,exist_ok=True);dump(verify_frozen_inputs(ROOT),OUT/"frozen_input_verification_before.json");dump({"python":platform.python_version(),"torch":torch.__version__,"mps_available":torch.backends.mps.is_available()},OUT/"environment.json")
-    print("M8 feature ablations",flush=True);ablations();print("M9 speed-held-out evaluation",flush=True);loso();print("M10 multi-task experiments",flush=True);r=[train_mtt(.5,"single_task"),train_mtt(.5,"score"),train_mtt(.5,"multitask"),train_mtt(.2,"multitask")];dump(r,OUT/"m10_multitask_summary.json");print("M11 phase analysis",flush=True);dump(phase_analysis(),OUT/"m11_phase_summary.json");dump(verify_frozen_inputs(ROOT),OUT/"frozen_input_verification_after.json");print("M8--M11 complete",flush=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", action="store_true", help="rerun even if the cached artifact verifies")
+    args = parser.parse_args()
+    status = cached_stage_status(ROOT, OUTPUT_ROOT, "phase2")
+    if status["complete"] and not args.force:
+        print(f"Reusing verified M8--M11 artifact: {status['path']}")
+        return
+    if not status["complete"]:
+        print(f"M8--M11 cache unavailable: {status['reason']}; running experiments.")
+    OUT.mkdir(parents=True,exist_ok=True);dump(verify_frozen_inputs(ROOT, OUTPUT_ROOT),OUT/"frozen_input_verification_before.json");dump({"python":platform.python_version(),"torch":torch.__version__,"mps_available":torch.backends.mps.is_available()},OUT/"environment.json")
+    print("M8 feature ablations",flush=True);ablations();print("M9 speed-held-out evaluation",flush=True);loso();print("M10 multi-task experiments",flush=True);r=[train_mtt(.5,"single_task"),train_mtt(.5,"score"),train_mtt(.5,"multitask"),train_mtt(.2,"multitask")];dump(r,OUT/"m10_multitask_summary.json");print("M11 phase analysis",flush=True);dump(phase_analysis(),OUT/"m11_phase_summary.json");dump(verify_frozen_inputs(ROOT, OUTPUT_ROOT),OUT/"frozen_input_verification_after.json");print("M8--M11 complete",flush=True)
 
 if __name__=="__main__": main()
