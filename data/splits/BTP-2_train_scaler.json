@@ -1,0 +1,35 @@
+{
+  "features": [
+    "wave_m",
+    "surge_m",
+    "sway_m",
+    "heave_m",
+    "roll_deg",
+    "pitch_deg",
+    "yaw_deg"
+  ],
+  "mean": {
+    "wave_m": 0.01769963354065744,
+    "surge_m": -0.00890530132792551,
+    "sway_m": -0.010841036073093934,
+    "heave_m": 0.0097169619371043,
+    "roll_deg": 0.0003431691249828299,
+    "pitch_deg": 0.017184259659742563,
+    "yaw_deg": -0.002765576128433946
+  },
+  "scale": {
+    "wave_m": 2.9513629733749887,
+    "surge_m": 0.9685070381721324,
+    "sway_m": 0.940749768358164,
+    "heave_m": 2.0330062917130047,
+    "roll_deg": 0.22546553893775412,
+    "pitch_deg": 1.7505913891286071,
+    "yaw_deg": 0.739139199922961
+  },
+  "fit_split": "train",
+  "fit_rows": 3238,
+  "fit_run_ids": [
+    "btp-2-data-sheet1__run01"
+  ],
+  "fit_data_hash": "6b6401d292a6720e4c8364eab8d2c8be2f8bd56adff434b5ef95e7516ee3ecc6"
+}

@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv*/
+
+# Reproducible source data and immutable manifests are versioned.  Generated
+# benchmark/model outputs are intentionally local so no legacy metric is
+# republished as a new result.
+outputs/
+BTP-2/BTP2_outputs/
+BTP-2/Latex_Report.zip
+BTP-2/Latex_Report/figures/
+
+# Notebook checkpoints and local editor state.
+.ipynb_checkpoints/
+.vscode/

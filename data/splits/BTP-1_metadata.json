@@ -1,0 +1,59 @@
+{
+  "dataset": "BTP-1",
+  "strategy": "run_heldout",
+  "input_steps": 100,
+  "output_steps": 50,
+  "stride": 10,
+  "hz": 10,
+  "purge_steps": 150,
+  "scaler_fit_split": "train",
+  "window_count": 2271,
+  "window_counts": {
+    "test": 1798,
+    "train": 219,
+    "validation": 254
+  },
+  "run_ids": [
+    "btp-time-series-data__run01",
+    "btp-time-series-data__run02",
+    "btp-time-series-data__run03"
+  ],
+  "scaler": {
+    "features": [
+      "wave_m",
+      "ship_speed_kn",
+      "surge_m",
+      "sway_m",
+      "heave_m",
+      "roll_deg",
+      "pitch_deg",
+      "yaw_deg"
+    ],
+    "mean": {
+      "wave_m": -0.0019161089973761855,
+      "ship_speed_kn": 2.0,
+      "surge_m": -1.5546082066055642e-06,
+      "sway_m": 7.776593746514413e-07,
+      "heave_m": -3.2799023146733264e-05,
+      "roll_deg": -1.655956286268832e-05,
+      "pitch_deg": -5.2618017010084256e-05,
+      "yaw_deg": 1.680502847287061e-06
+    },
+    "scale": {
+      "wave_m": 0.12633250948276872,
+      "ship_speed_kn": 1.0,
+      "surge_m": 9.778793798481187e-05,
+      "sway_m": 0.00021513735526629916,
+      "heave_m": 0.0010686485382723821,
+      "roll_deg": 0.0012603868289035593,
+      "pitch_deg": 0.002610441414507529,
+      "yaw_deg": 0.00036782082113758706
+    },
+    "fit_split": "train",
+    "fit_rows": 2330,
+    "fit_run_ids": [
+      "btp-time-series-data__run01"
+    ],
+    "fit_data_hash": "6585b76d4854a7179985dbb1fd964a7f010453e9bbfd674ce3751506e7370feb"
+  }
+}

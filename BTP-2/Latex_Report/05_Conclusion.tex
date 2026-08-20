@@ -1,0 +1,16 @@
+\section{Summary of Achievements}
+This second phase of the B.Tech project successfully expanded upon the foundational time-series forecasting model developed previously. By shifting from a single-task paradigm to a Multi-Task Temporal Transformer, the predictive system was augmented to monitor critical operational limits, specifically propeller emergence and ventilation. 
+
+The integration of the \texttt{PROP\_REF\_DISC} in the Maxsurf simulations enabled the extraction of local stern responses. The mathematical formulation of the Emergence Score, combined with the 6-DoF kinematic data, provided a rich multi-variate dataset. 
+
+The trained Transformer demonstrated outstanding capabilities on unseen test data. It achieved an $R^2$ of $0.9993$ on the 6-DoF motion regression, effectively proving that deep self-attention networks can perfectly emulate complex wave-hull interactions in real-time. Furthermore, the synthetic threshold experiment validated the binary classification head, which achieved an F1-Score of $99.06\%$ in predicting the highly non-linear events of propeller emergence.
+
+\section{Future Work}
+While the current model effectively captures motions and geometric ventilation limits, the ultimate goal of a predictive routing system involves optimizing for energy efficiency and structural longevity. Future iterations of this research could explore:
+\begin{itemize}
+    \item \textbf{Added Resistance Prediction:} Utilizing the data generated from the Maxsurf Resistance modules to predict calm-water and added wave resistance dynamically.
+    \item \textbf{Power Requirements:} Extending the multi-task heads to estimate the instantaneous effective power ($P_E$) required to maintain speed in varying sea states.
+    \item \textbf{Recurrent Architectures:} Comparing the computational efficiency of the Transformer against modern sequence models like Temporal Convolutional Networks (TCNs) or advanced LSTMs for edge-deployment on marine vessels.
+\end{itemize}
+
+Ultimately, this surrogate model lays the groundwork for an intelligent, real-time decision-support system capable of warning ship operators of impending operational hazards based purely on immediate wave and motion telemetry.

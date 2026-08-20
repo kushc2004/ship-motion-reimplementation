@@ -1,0 +1,68 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, backgrounds}
+\usepackage{setspace}
+\usepackage{float}
+\usepackage{subcaption}
+
+\onehalfspacing
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge \textbf{Multi-Task Temporal Transformer for Ship Motion and Propeller Operability Prediction} \par}
+    
+    \vspace{2cm}
+    {\Large \textit{B.Tech Project Report} \par}
+    
+    \vspace{1.5cm}
+    {\normalsize By \par}
+    \vspace{0.5cm}
+    {\Large \textbf{Kush Chaudhari} \par}
+    {\large 22NA3AI39 \par}
+    
+    \vspace{2cm}
+    {\normalsize Under the Guidance of \par}
+    \vspace{0.5cm}
+    {\Large \textbf{Prof. Hari Warrior} \par}
+    
+    \vfill
+    
+    {\large \today \par}
+\end{titlepage}
+
+\begin{abstract}
+Predicting the seakeeping behavior of a vessel is crucial for ensuring operational safety, passenger comfort, and structural integrity. Recently, deep learning surrogate models have emerged as computationally efficient alternatives to traditional hydrodynamic solvers. In the previous phase of this project, a Transformer-based model was successfully developed to predict the 6-Degrees of Freedom (6-DoF) ship motions from simulated time-series data. In this phase, the simulation environment was augmented by introducing a propeller disc representation at the stern of the vessel. This report details the development of a Multi-Task Temporal Transformer designed not only to forecast the 6-DoF motions but also to simultaneously predict propeller operability. Specifically, the model continuously estimates a Propeller Emergence Score and classifies binary emergence events to prevent ventilation and efficiency losses. By evaluating the model under different emergence thresholds, we demonstrate near-perfect motion regression ($R^2 > 0.999$) and highly accurate emergence classification (F1-Score $> 0.99$), proving the viability of multi-task Transformers in complex maritime forecasting applications.
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\chapter{Introduction}
+\input{01_Introduction}
+
+\chapter{Data Generation and Simulation}
+\input{02_Data_Generation}
+
+\chapter{Methodology}
+\input{03_Methodology}
+
+\chapter{Results and Discussion}
+\input{04_Results_and_Discussion}
+
+\chapter{Conclusion and Future Work}
+\input{05_Conclusion}
+
+\end{document}

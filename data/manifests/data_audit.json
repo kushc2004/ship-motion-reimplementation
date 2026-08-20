@@ -1,0 +1,144 @@
+[
+  {
+    "source_file": "/Volumes/Extreme SSD/projects/btp/BTP-1/BTP - Time-Series Data.csv",
+    "eligible": true,
+    "raw_rows": 16407,
+    "canonical_rows": 16407,
+    "columns": [
+      "time_s",
+      "wave_m",
+      "ship_speed_kn",
+      "surge_m",
+      "sway_m",
+      "heave_m",
+      "roll_deg",
+      "pitch_deg",
+      "yaw_deg"
+    ],
+    "null_count": 0,
+    "runs": 3,
+    "duplicate_run_time": 0,
+    "nonpositive_within_run_deltas": 0,
+    "median_dt_s": 0.14100000000001955,
+    "speed_values_kn": [
+      2,
+      5,
+      8
+    ],
+    "layout": {
+      "table_type": "motion_telemetry",
+      "row_count": 16408,
+      "max_columns": 9,
+      "header_rows_zero_based": [
+        0
+      ]
+    }
+  },
+  {
+    "source_file": "/Volumes/Extreme SSD/projects/btp/BTP-1/Data.csv",
+    "eligible": false,
+    "raw_columns": [
+      "2.5 kn; 0 deg",
+      "Unnamed: 1",
+      "Unnamed: 2",
+      "Unnamed: 3",
+      "Unnamed: 4",
+      "Unnamed: 5",
+      "Unnamed: 6",
+      "Unnamed: 7",
+      "Unnamed: 8",
+      "Unnamed: 9",
+      "Unnamed: 10",
+      "Unnamed: 11",
+      "Unnamed: 12",
+      "Unnamed: 13",
+      "Unnamed: 14",
+      "Unnamed: 15",
+      "Unnamed: 16"
+    ],
+    "layout": {
+      "table_type": "rao_blocks",
+      "row_count": 930,
+      "max_columns": 17,
+      "block_count": 10,
+      "header_rows_zero_based": [
+        1,
+        94,
+        187,
+        280,
+        373,
+        466,
+        559,
+        652,
+        745,
+        838
+      ],
+      "block_labels": [
+        "2.5 kn; 0 deg",
+        "2.5 kn; 45 deg",
+        "2.5 kn; 90 deg",
+        "2.5 kn; 135 deg",
+        "2.5 kn; 180 deg",
+        "8 kn; 0 deg",
+        "8 kn; 45 deg",
+        "8 kn; 90 deg",
+        "8 kn; 135 deg",
+        "8 kn; 180 deg"
+      ]
+    }
+  },
+  {
+    "source_file": "/Volumes/Extreme SSD/projects/btp/BTP-1/Ship-Parameters-data.csv",
+    "eligible": false,
+    "raw_columns": [
+      "Hydrostatic Coefficients",
+      "Unnamed: 1",
+      "Unnamed: 2",
+      "Unnamed: 3",
+      "INPUT PARAMETERS FOR DATA",
+      "Unnamed: 5",
+      "Unnamed: 6"
+    ],
+    "layout": {
+      "table_type": "metadata_tables",
+      "row_count": 71,
+      "max_columns": 7,
+      "header_rows_zero_based": [
+        0,
+        1
+      ],
+      "side_by_side_tables": true
+    }
+  },
+  {
+    "source_file": "/Volumes/Extreme SSD/projects/btp/BTP-2/BTP_2_data - Sheet1.csv",
+    "eligible": true,
+    "raw_rows": 6733,
+    "canonical_rows": 6733,
+    "columns": [
+      "time_s",
+      "wave_m",
+      "ship_speed_kn",
+      "surge_m",
+      "sway_m",
+      "heave_m",
+      "roll_deg",
+      "pitch_deg",
+      "yaw_deg"
+    ],
+    "null_count": 0,
+    "runs": 1,
+    "duplicate_run_time": 0,
+    "nonpositive_within_run_deltas": 0,
+    "median_dt_s": 0.07900000000000773,
+    "speed_values_kn": [],
+    "layout": {
+      "table_type": "motion_telemetry",
+      "row_count": 6734,
+      "max_columns": 8,
+      "header_rows_zero_based": [
+        0
+      ]
+    }
+  }
+]

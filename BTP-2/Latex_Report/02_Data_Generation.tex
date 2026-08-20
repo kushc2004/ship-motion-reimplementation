@@ -1,0 +1,124 @@
+\section{Vessel Specifications}
+The simulation vessel is a full-load container ship representative of modern ultra-large container vessels (ULCVs). Generating accurate time-series data requires a highly defined hull geometry to properly calculate the hydrodynamic coupling across all degrees of freedom. Its principal particulars are summarized in Table \ref{tab:vessel_specs}.
+
+\begin{table}[H]
+\centering
+\caption{Vessel Specifications}
+\label{tab:vessel_specs}
+\vspace{0.2cm}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\ \midrule
+Vessel Type & Container Vessel \\
+Length Overall (LOA) & $\sim 350$ m \\
+Draft (Full Load) & 15 m \\
+Vessel Speeds Simulated & 2, 5, 8 knots \\
+Simulation Software & Maxsurf Motions (MOSES Strip Theory) \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\section{Simulation Setup}
+Time-domain simulations were conducted in irregular waves characterized by the JONSWAP (Joint North Sea Wave Project) energy spectrum, which is widely used for modelling wind-generated ocean waves in design and operational scenarios. Simulations were performed at three forward speeds—2, 5, and 8 knots—to capture the effect of vessel speed on hydrodynamic coupling. For each speed, the vessel's six-component motion response (surge, sway, heave, roll, pitch, yaw) was recorded at a nominal sampling rate, subsequently processed to a uniform 10 Hz grid. The simulation parameters are summarized in Table \ref{tab:sim_params}.
+
+\begin{table}[H]
+\centering
+\caption{Simulation Parameters}
+\label{tab:sim_params}
+\vspace{0.2cm}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\ \midrule
+Wave Spectrum & JONSWAP \\
+Wave Type & Irregular (Random Seas) \\
+Vessel Speeds & 2 kn, 5 kn, 8 kn \\
+Output Sampling Rate & 10 Hz (uniform grid) \\
+Degrees of Freedom & 6 (Surge, Sway, Heave, Roll, Pitch, Yaw) \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Integrating the Propeller Disc}
+Instead of modeling the complex hydrodynamics of the rotating propeller blades within the seakeeping solver, a geometrical reference point was established. A \texttt{PROP\_REF\_DISC} was added to the Maxsurf Modeler at the stern of the vessel. The coordinates of the propeller center and the propeller diameter were recorded. This approach ensures that the fundamental hull hydrostatics remain unchanged, while allowing Maxsurf Motions to compute the exact kinematic response at the specific location of the propeller disc. Figure \ref{fig:sim_pipeline} illustrates the complete data generation workflow.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.5cm and 2cm,
+        box/.style={rectangle, draw=black!80, thick, fill=blue!15, text width=3.5cm, align=center, rounded corners, minimum height=1.2cm, inner sep=0.2cm},
+        env/.style={rectangle, draw=black!80, thick, fill=teal!15, text width=3.5cm, align=center, rounded corners, minimum height=1.2cm, inner sep=0.2cm},
+        process/.style={rectangle, draw=black!80, thick, fill=orange!15, text width=4cm, align=center, rounded corners, minimum height=1.2cm, inner sep=0.2cm},
+        output/.style={rectangle, draw=black!80, thick, fill=purple!15, text width=3.5cm, align=center, rounded corners, minimum height=1.2cm, inner sep=0.2cm},
+        arrow/.style={-{Stealth[scale=1.2]}, thick, color=black!80}
+    ]
+    
+    % Nodes
+    \node[box] (modeler) {\textbf{Maxsurf Modeler}\\ \footnotesize (ULCV Hull + Propeller Disc)};
+    \node[env] (wave) [right=2cm of modeler] {\textbf{JONSWAP Spectrum}\\ \footnotesize (Irregular Random Seas)};
+    \node[process] (motions) [below=1.5cm of modeler] {\textbf{Maxsurf Motions}\\ \footnotesize (MOSES Strip Theory \\ @ 2, 5, 8 knots)};
+    \node[output] (csv) [right=2cm of motions] {\textbf{Time-Series Output}\\ \footnotesize (10 Hz Grid, 6-DoF + Wave)};
+    
+    % Grouping Box
+    \begin{scope}[on background layer]
+        \node[draw=black!40, dashed, thick, rounded corners, fill=gray!5, inner sep=0.5cm, fit=(modeler) (wave) (motions) (csv)] (pipeline) {};
+        \node[anchor=north west, color=black!60, font=\itshape] at (pipeline.north west) {Simulation Pipeline};
+    \end{scope}
+
+    % Connections
+    \draw[arrow] (modeler) -- (motions);
+    \draw[arrow] (wave.south) |- (motions.east);
+    \draw[arrow] (motions) -- (csv);
+    
+    \end{tikzpicture}
+    \caption{Data Generation Pipeline: From geometric hull modelling and JONSWAP wave generation to the final 10 Hz multivariate time-series extraction.}
+    \label{fig:sim_pipeline}
+\end{figure}
+
+\section{Formulating the Propeller Emergence Metrics}
+While Maxsurf outputs the raw motions, the actual analysis of propeller emergence is performed downstream during data preprocessing. Because the propeller is located at the stern, the vertical motion of the propeller center is strongly correlated with the ship's global heave and pitch. For this study, the global heave amplitude is utilized as a proxy for the vertical displacement at the stern.
+
+We define the \textbf{Emergence Score ($E$)} as the ratio of the upward motion amplitude to the static depth of the propeller:
+\begin{equation}
+    E = \frac{A_{\text{upward at prop center}}}{h_{\text{top, static}}} \approx \frac{|\text{Heave Amplitude}|}{h_{\text{static}}}
+\end{equation}
+Where $h_{\text{static}}$ is the depth of the top of the propeller disc below the calm waterline. 
+
+From this continuous score, a binary \textbf{Emergence Flag} is derived to classify the ventilation event:
+\begin{equation}
+    \text{Flag} = 
+    \begin{cases} 
+      1 & \text{if } E \geq 1.0 \\
+      0 & \text{if } E < 1.0
+    \end{cases}
+\end{equation}
+
+By extracting these values, the dataset is transformed into a multi-target format suitable for training the deep learning model.
+
+\subsection{Dataset Statistics}
+The generated dataset comprises 6,733 raw timesteps. To understand the operational conditions simulated, Table \ref{tab:dataset_stats} presents the descriptive statistics for the wave elevation and the corresponding 6-DoF responses. The maximum wave amplitude observed was approximately $\pm 4.18m$, which induced a maximum heave displacement of $\pm 2.88m$ and pitch variations up to $\pm 2.47^\circ$. The standard deviations indicate a highly dynamic sea state, providing a robust distribution for training the predictive models.
+
+\begin{table}[H]
+\centering
+\caption{Descriptive Statistics of the Simulated Maxsurf Dataset (6,733 samples)}
+\label{tab:dataset_stats}
+\vspace{0.2cm}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Variable} & \textbf{Minimum} & \textbf{Maximum} & \textbf{Mean} & \textbf{Std. Dev.} \\ \midrule
+Wave ($m$) & -4.183 & +4.183 & 0.014 & 2.962 \\
+Surge ($m$) & -1.369 & +1.369 & -0.003 & 0.966 \\
+Sway ($m$) & -1.327 & +1.327 & -0.004 & 0.938 \\
+Heave ($m$) & -2.883 & +2.883 & 0.009 & 2.040 \\
+Roll ($deg$) & -0.320 & +0.320 & 0.001 & 0.226 \\
+Pitch ($deg$) & -2.474 & +2.474 & 0.005 & 1.746 \\
+Yaw ($deg$) & -1.049 & +1.049 & -0.003 & 0.742 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\section{Feature Correlation Analysis}
+To ensure the machine learning model focuses on physically meaningful relationships rather than noise, a preliminary correlation analysis was conducted. It was observed that the calculated Emergence Score ($E$) exhibits a strong positive correlation with the global heave and pitch signals. This aligns with fundamental seakeeping theory: large vertical displacements and rotational pitching directly dictate the vertical trajectory of the stern propeller disc. The Transformer architecture is inherently well-suited to capture these multivariate correlations across the 10-second input temporal window.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/correlation_heatmap.png}
+    \caption{Pearson correlation heatmap demonstrating the physical dependencies between the wave excitation, 6-DoF responses, and the derived Propeller Emergence Score.}
+    \label{fig:corr_heatmap}
+\end{figure}

@@ -1,0 +1,170 @@
+\section{Data Preprocessing}
+Before feeding the data into the deep learning model, a robust preprocessing pipeline was established to handle the temporal complexities of the simulation output.
+
+\subsection{Temporal Interpolation and Normalization}
+The raw Maxsurf output contained non-uniform timesteps. To establish a consistent temporal grid required for sequence modeling, cubic spline interpolation was applied to resample all signals (wave and 6-DoF motions) to a uniform 10 Hz frequency. Following interpolation, the features were scaled using standard $Z$-score normalization to ensure the network gradients remain stable during backpropagation.
+
+\subsection{Feature Engineering and Sequence Generation}
+The continuous Emergence Score ($E$) was calculated by taking the rolling amplitude of the heave signal over a 0.5-second window. The binary Emergence Flag was subsequently derived. The time-series was then segmented into overlapping sliding windows. The input sequence consisted of 100 timesteps ($10$ seconds), and the target output sequence consisted of 50 timesteps ($5$ seconds) into the future. A temporal split was utilized for the dataset, allocating the final 20\% of the temporal sequence strictly for testing to prevent data leakage.
+
+\section{Multi-Task Transformer Architecture}
+The predictive engine is built upon the Transformer encoder architecture. Unlike traditional sequence models (e.g., LSTMs), Transformers utilize self-attention mechanisms, allowing them to capture long-range dependencies and complex phase relationships between the wave input and the ship's physical response.
+
+\subsection{Network Design}
+The architecture features a \textbf{Shared Encoder} backbone that processes the 7-dimensional input sequence. This sequence is first projected into a higher-dimensional embedding space ($d_{model} = 128$). Because Transformers lack inherent sequential inductive bias, \textbf{Positional Encodings} are injected to preserve temporal ordering. The encodings are mathematically formulated as:
+\begin{align}
+    PE_{(pos, 2i)} &= \sin\left(\frac{pos}{10000^{2i/d_{model}}}\right) \\
+    PE_{(pos, 2i+1)} &= \cos\left(\frac{pos}{10000^{2i/d_{model}}}\right)
+\end{align}
+where $pos$ is the temporal position in the sequence and $i$ is the feature dimension index. This periodic encoding ensures the network can smoothly interpolate relative temporal distances between wave impacts and resultant motions.
+
+The core consists of 4 stacked Transformer Encoder layers. Following temporal average-pooling, the high-level temporal features are passed to three independent, task-specific Multi-Layer Perceptron (MLP) heads. Figure \ref{fig:arch_diagram} illustrates the complete data flow.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.2cm and 2.5cm,
+        box/.style={rectangle, draw=black, thick, fill=blue!10, text width=4cm, align=center, rounded corners, minimum height=1cm},
+        head/.style={rectangle, draw=black, thick, fill=green!10, text width=3.8cm, align=center, rounded corners, minimum height=1cm},
+        loss/.style={rectangle, draw=red!80, thick, fill=red!10, text width=2.5cm, align=center, rounded corners, minimum height=0.8cm},
+        arrow/.style={-{Stealth[scale=1.2]}, thick, color=black!80}
+    ]
+    
+    % Nodes
+    \node[box, fill=gray!10] (input) {\textbf{Input Sequence}\\ \footnotesize (Wave + 6-DoF, $T=100$)};
+    \node[box] (proj) [below=of input] {\textbf{Linear Projection} \\ \footnotesize ($d_{model}=128$)};
+    \node[box, fill=purple!10, text width=3cm] (pe) [right=of proj] {\textbf{Positional} \\ \textbf{Encoding} $\oplus$};
+    \node[box, fill=orange!15, minimum height=1.5cm] (encoder) [below=of proj] {\textbf{Transformer Encoder} \\ \footnotesize (4 Layers, 8 Heads)};
+    \node[box] (pool) [below=of encoder] {\textbf{Temporal Pooling} \\ \footnotesize (Mean over $T$)};
+    
+    % Spread out the 3 heads horizontally
+    \node[head] (score) [below=1.8cm of pool] {\textbf{Score Head} \\ \footnotesize (Emergence Regression)};
+    \node[head] (motion) [left=0.6cm of score] {\textbf{Motion Head} \\ \footnotesize (6-DoF Regression)};
+    \node[head] (flag) [right=0.6cm of score] {\textbf{Flag Head} \\ \footnotesize (Binary Classification)};
+    
+    \node[loss] (mse1) [below=0.8cm of motion] {\textbf{MSE Loss} \\ \footnotesize ($\lambda_1 = 1.0$)};
+    \node[loss] (mse2) [below=0.8cm of score] {\textbf{MSE Loss} \\ \footnotesize ($\lambda_2 = 0.5$)};
+    \node[loss] (bce) [below=0.8cm of flag] {\textbf{BCE Loss} \\ \footnotesize ($\lambda_3 = 0.3$)};
+    
+    % Grouping Box for Multi-Task
+    \begin{scope}[on background layer]
+        \node[draw=black!50, dashed, thick, rounded corners, fill=yellow!5, inner sep=0.4cm, fit=(motion) (flag) (mse1) (bce)] (multitask) {};
+        \node[anchor=north west, color=black!70] at (multitask.north west) {\textit{Multi-Task Optimization}};
+    \end{scope}
+
+    % Connections
+    \draw[arrow] (input) -- (proj);
+    \draw[arrow] (proj) -- (encoder);
+    \draw[arrow] (pe) -- (proj);
+    \draw[arrow] (encoder) -- (pool);
+    
+    \draw[arrow] (pool) -- (motion.north);
+    \draw[arrow] (pool) -- (score.north);
+    \draw[arrow] (pool) -- (flag.north);
+    
+    \draw[arrow] (motion) -- (mse1);
+    \draw[arrow] (score) -- (mse2);
+    \draw[arrow] (flag) -- (bce);
+    
+    \end{tikzpicture}
+    \caption{Architecture Diagram of the Multi-Task Temporal Transformer. The shared encoder extracts temporal features which are then utilized by task-specific prediction heads.}
+    \label{fig:arch_diagram}
+\end{figure}
+
+\subsection{Physical Interpretability of Self-Attention}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1cm and 1.5cm,
+        tensor/.style={rectangle, draw=black!80, thick, fill=blue!10, text width=1.5cm, align=center, rounded corners, minimum height=0.8cm},
+        weight/.style={rectangle, draw=black!80, thick, fill=yellow!15, text width=2cm, align=center, rounded corners, minimum height=0.8cm},
+        op/.style={circle, draw=black!80, thick, fill=red!15, align=center, inner sep=0.1cm},
+        arrow/.style={-{Stealth[scale=1.2]}, thick, color=black!80}
+    ]
+    
+    % Input
+    \node[tensor, text width=2.5cm, fill=gray!15] (input) {Temporal \\ Embeddings};
+    
+    % Weights
+    \node[weight] (wq) [above right=0.5cm and 1.5cm of input] {$W^Q$ (Query)};
+    \node[weight] (wk) [right=1.5cm of input] {$W^K$ (Key)};
+    \node[weight] (wv) [below right=0.5cm and 1.5cm of input] {$W^V$ (Value)};
+    
+    % Q, K, V
+    \node[tensor] (q) [right=1cm of wq] {$Q$};
+    \node[tensor] (k) [right=1cm of wk] {$K$};
+    \node[tensor] (v) [right=1cm of wv] {$V$};
+    
+    % MatMul 1
+    \node[op] (matmul1) [right=1.2cm of k] {$\otimes$};
+    \node[right=0.2cm of matmul1, align=center, font=\footnotesize] (scale) {Scale \\ \& Softmax};
+    
+    % MatMul 2
+    \node[op] (matmul2) [right=2.5cm of v] {$\otimes$};
+    
+    % Output
+    \node[tensor, text width=2.5cm, fill=green!15] (output) [right=1cm of matmul2] {Contextual \\ Vectors};
+    
+    % Connections
+    \draw[arrow] (input.east) |- (wq.west);
+    \draw[arrow] (input.east) -- (wk.west);
+    \draw[arrow] (input.east) |- (wv.west);
+    
+    \draw[arrow] (wq) -- (q);
+    \draw[arrow] (wk) -- (k);
+    \draw[arrow] (wv) -- (v);
+    
+    \draw[arrow] (q.east) -| (matmul1.north);
+    \draw[arrow] (k.east) -- (matmul1.west);
+    
+    \draw[arrow] (matmul1.south) -- (matmul2.north) node[midway, right, font=\footnotesize] {Attention Weights};
+    \draw[arrow] (v.east) -- (matmul2.west);
+    
+    \draw[arrow] (matmul2.east) -- (output.west);
+    
+    \end{tikzpicture}
+    \caption{Conceptual visualization of a single Self-Attention Head. The network calculates attention weights mapping the interaction between distinct temporal features (e.g., wave elevation vs. pitch angle).}
+    \label{fig:attention_mech}
+\end{figure}
+
+A core advantage of employing the Transformer architecture in seakeeping analysis is the physical interpretability of the Multi-Head Attention mechanism. The attention matrices mathematically map the phase-shift between incoming wave disturbances and the vessel's subsequent kinematic response. By computing attention weights across the entire 10-second input window, the network effectively learns the complex Response Amplitude Operators (RAOs) of the hull. This allows the model to inherently understand that a wave peak occurring at $t=2s$ will induce a maximal pitch angle at $t=4s$, establishing a deeply grounded physical surrogate model rather than a simple autoregressive statistical curve-fit.
+
+\section{Multi-Task Loss and Optimization Dynamics}
+Training the network requires optimizing for continuous multi-variate regression and discrete binary classification simultaneously. A composite loss function was engineered to balance the gradient vectors originating from the three distinct task heads:
+\begin{equation}
+\begin{aligned}
+    \mathcal{L}_{total} = {} & \lambda_1 \sum_{t=1}^{T_{out}} ||\hat{y}_{motion}^{(t)} - y_{motion}^{(t)}||^2 \\
+    & + \lambda_2 \sum_{t=1}^{T_{out}} ||\hat{E}^{(t)} - E^{(t)}||^2 \\
+    & - \lambda_3 \sum_{t=1}^{T_{out}} \left( y_{flag}^{(t)} \log(\hat{p}^{(t)}) + (1 - y_{flag}^{(t)}) \log(1 - \hat{p}^{(t)}) \right)
+\end{aligned}
+\end{equation}
+
+The scalar weights were empirically set to $\lambda_1 = 1.0$, $\lambda_2 = 0.5$, and $\lambda_3 = 0.3$. This hierarchical weighting scheme ensures that the foundational kinematics (the heaviest gradients) drive the primary learning of the Shared Encoder, while the secondary ventilation tasks act as regularizing constraints. This simultaneous optimization prevents negative transfer, as the accurate prediction of the Emergence Flag is physically contingent on the accurate prediction of the continuous Heave and Pitch motions.
+
+\subsection{Hyperparameter Configuration}
+To ensure reproducibility and operational efficiency, the network was highly parameterized. The self-attention embedding space was constrained to $d_{model}=128$ to maintain a small memory footprint suitable for embedded maritime deployment. Table \ref{tab:hyperparameters} details the comprehensive training parameters.
+
+\begin{table}[H]
+\centering
+\caption{Multi-Task Transformer Hyperparameters}
+\label{tab:hyperparameters}
+\vspace{0.2cm}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\ \midrule
+Input Sequence Window & 100 timesteps ($10$ seconds) \\
+Output Sequence Window & 50 timesteps ($5$ seconds) \\
+Input Features & 7 (Wave + 6-DoF) \\
+Model Embedding Dim ($d_{model}$) & 128 \\
+Attention Heads & 8 \\
+Encoder Layers & 4 \\
+Feedforward Network Dim & 512 \\
+Dropout & 0.1 \\
+Activation Function & GELU \\
+Optimizer & AdamW \\
+Learning Rate & $1 \times 10^{-3}$ (with ReduceLROnPlateau) \\
+Batch Size & 32 \\
+Loss Weights ($\lambda_1, \lambda_2, \lambda_3$) & 1.0 (Motion), 0.5 (Score), 0.3 (Flag) \\ \bottomrule
+\end{tabular}
+\end{table}

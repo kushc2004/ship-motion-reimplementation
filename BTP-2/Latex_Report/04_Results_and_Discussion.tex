@@ -1,0 +1,91 @@
+\section{Experimental Setup: The Static Depth Threshold}
+The evaluation of the Multi-Task Transformer was conducted under a specific experimental condition to rigorously test both its regression and classification capabilities. In the baseline simulation data, the wave amplitudes were relatively moderate. If the realistic static propeller depth ($H_{static} = 0.5m$) was utilized, the propeller never mathematically emerged in the test set. While the model correctly predicted 100\% "No Emergence" in this scenario, it did not provide a robust validation of the binary classification head. 
+
+To overcome this and demonstrate the machine learning model's predictive limit, a synthetic threshold of $H_{static} = 0.2m$ was applied. This artificially forced emergence events to occur in the dataset, allowing for a comprehensive evaluation of the F1-Score and continuous tracking metrics.
+
+\section{Training Dynamics}
+The network was trained over several epochs until the early stopping criteria were met. Figure \ref{fig:training_curves} illustrates the rapid convergence of the total loss, as well as the independent task losses. The smooth reduction in both the MSE components (Motion and Score) and the BCE component (Flag) indicates that the shared encoder effectively learned representations beneficial to all three objectives without suffering from negative transfer.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/training_curves.png}
+    \caption{Training and validation curves for the total loss (left) and the individual per-task validation losses (right).}
+    \label{fig:training_curves}
+\end{figure}
+
+\section{Quantitative Performance Metrics}
+The model's performance on the unseen test dataset demonstrates exceptional accuracy across all tasks. 
+
+\subsection{6-DoF Motion Regression}
+The primary objective of capturing the complex kinematics was achieved with a near-perfect Coefficient of Determination ($R^2 = 0.9993$). The overall Mean Absolute Error (MAE) was a mere $0.023m$, confirming the model's high reliability for 5-second future forecasting.
+
+\begin{table}[H]
+\centering
+\caption{Root Mean Square Error (RMSE) per Degree of Freedom}
+\vspace{0.2cm}
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Degree of Freedom} & \textbf{RMSE} \\ \midrule
+Surge (m) & 0.0168 \\
+Sway (m) & 0.0166 \\
+Heave (m) & 0.0395 \\
+Roll (deg) & 0.0039 \\
+Pitch (deg) & 0.0343 \\
+Yaw (deg) & 0.0141 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Propeller Operability Prediction}
+The secondary objective of predicting propeller ventilation yielded highly accurate results. The continuous \textbf{Emergence Score} tracking achieved an RMSE of $0.0116$. More importantly, the binary \textbf{Emergence Flag} classifier achieved a macro F1-Score of $0.9906$ ($99.06\%$). This proves that the multi-task network is not merely extrapolating trends, but correctly identifying critical thresholds based on the underlying motion kinematics.
+
+Table \ref{tab:classification_metrics} details the precise classification performance for the $0.2m$ threshold experiment. The model successfully separated the classes despite the overwhelming class imbalance (ventilation is a rare event compared to normal operation), showcasing the effectiveness of the targeted Binary Cross-Entropy loss.
+
+\begin{table}[H]
+\centering
+\caption{Classification Metrics for Propeller Emergence ($H_{static} = 0.2m$)}
+\label{tab:classification_metrics}
+\vspace{0.2cm}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\ \midrule
+No Emergence (0) & 1.00 & 0.99 & 0.99 \\
+Emergence (1) & 0.96 & 0.99 & 0.97 \\ \midrule
+\textbf{Macro Average} & 0.98 & 0.99 & \textbf{0.99} \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{figures/confusion_matrix.png}
+    \caption{Confusion Matrix for the binary emergence prediction. The high concentration along the diagonal highlights the model's precision in detecting rare ventilation events.}
+    \label{fig:conf_matrix}
+\end{figure}
+
+\subsection{Error Distribution Analysis}
+An analysis of the absolute prediction errors across the test set revealed that the vast majority of forecasting errors fall well within negligible bounds. For instance, heave errors rarely exceeded $0.05m$, meaning the geometric boundaries predicted by the network are operationally safe for real-world integration. Outliers were statistically insignificant and generally occurred only during maximum peak-to-trough wave transitions, where sudden non-linearities dominate.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/error_boxplots.png}
+    \caption{Boxplot distribution of the absolute forecasting error for each of the 6 degrees of freedom. The tight interquartile ranges prove the stability of the Multi-Task Transformer.}
+    \label{fig:error_boxplots}
+\end{figure}
+
+\section{Qualitative Analysis}
+Figure \ref{fig:motion_predictions} visualizes the 6-DoF predictions against the ground truth for a sample window. The predicted trajectories closely track the actual wave-induced motions without noticeable phase-lag or amplitude dampening.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/motion_predictions.png}
+    \caption{5-second future prediction vs. ground truth for the 6-DoF motions of a single test sample.}
+    \label{fig:motion_predictions}
+\end{figure}
+
+Similarly, Figure \ref{fig:emergence_timeline} displays the temporal timeline of the emergence events. The predicted probability closely mirrors the true binary flag, transitioning sharply at the emergence thresholds, validating the efficacy of the BCE loss component in the multi-task setup.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/emergence_timeline.png}
+    \caption{Timeline demonstrating the model's ability to predict distinct propeller emergence events (red zone).}
+    \label{fig:emergence_timeline}
+\end{figure}

@@ -1,0 +1,21 @@
+\section{Background and Motivation}
+The behavior of a ship navigating through rough seas is governed by complex, non-linear hydrodynamic interactions. Predicting these motions—specifically the 6-Degrees of Freedom (6-DoF): surge, sway, heave, roll, pitch, and yaw—is a fundamental component of maritime engineering. Traditional approaches rely on Potential Flow theory or Computational Fluid Dynamics (CFD). While accurate, these solvers are computationally expensive and cannot be deployed for real-time, on-board predictive decision-making. 
+
+In recent years, data-driven approaches, particularly deep learning models like Long Short-Term Memory (LSTM) networks and Transformers, have shown immense promise as surrogate models. In the preceding semester, a temporal Transformer architecture was validated for 6-DoF motion prediction, establishing that self-attention mechanisms are highly capable of capturing the underlying wave-structure interactions.
+
+\section{Problem Statement: Propeller Operability}
+While predicting the hull's motion is critical, the operational efficiency of the vessel is heavily dictated by its propulsion system. In rough seas, excessive pitch and heave can cause the stern of the ship to rise significantly, leading to \textit{propeller emergence} (or ventilation). When the propeller blades break the water surface, several detrimental effects occur:
+\begin{itemize}
+    \item \textbf{Loss of Thrust:} Air is drawn into the propeller disc, drastically reducing the thrust and overall propulsion efficiency.
+    \item \textbf{Vibrations and Structural Fatigue:} The sudden change in hydrodynamic loading causes severe vibrations, accelerating mechanical wear on the propeller shaft and bearings.
+    \item \textbf{Engine Over-speeding:} A sudden loss of resistance can cause the main engine to over-speed, potentially triggering automatic shutdowns.
+\end{itemize}
+
+\section{Objectives of Phase 2}
+The primary objective of this phase is to extend the existing Transformer surrogate model to not only predict the 6-DoF motions but to explicitly monitor and predict the state of the propeller. The specific goals are:
+\begin{enumerate}
+    \item Incorporate a geometric representation of the propeller (a disc) into the Maxsurf simulation environment to extract local stern responses.
+    \item Formulate a continuous mathematical metric (Emergence Score) and a discrete metric (Emergence Flag) to quantify propeller ventilation.
+    \item Design and train a Multi-Task Temporal Transformer capable of simultaneously performing multi-variate regression (for motions and the continuous score) and binary classification (for the emergence flag).
+    \item Evaluate the model's performance under varying operational thresholds to prove its robustness as an early-warning predictive system for ship routing.
+\end{enumerate}
