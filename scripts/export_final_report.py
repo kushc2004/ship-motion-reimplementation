@@ -28,7 +28,7 @@ def main():
     required=[PHASE/'frozen_input_verification_after.json',PHASE/'m10_multitask_summary.json',PHASE/'m9_speed_ood.json',PHASE/'m11_phase_lag.csv']
     missing=[str(p) for p in required if not p.exists()]
     if missing: raise SystemExit('M12 blocked: '+', '.join(missing))
-    if not load(PHASE/'frozen_input_verification_after.json').get('verified'): raise SystemExit('M12 blocked: frozen inputs changed')
+    if load(PHASE/'frozen_input_verification_after.json').get('status') != 'verified': raise SystemExit('M12 blocked: frozen inputs changed')
     primary=pd.read_csv(OUTPUT_ROOT/'primary_benchmark_m37'/'primary_comparison.csv'); comp=load(OUTPUT_ROOT/'primary_benchmark_m37'/'transformer_comparison.json'); ab=pd.read_csv(PHASE/'m8_feature_ablations.csv'); ood=pd.read_csv(PHASE/'m9_speed_ood.csv'); phase=pd.read_csv(PHASE/'m11_phase_lag.csv'); m10=load(PHASE/'m10_multitask_summary.json');make_figures(primary,ood,phase)
     rows=[{'experiment':r['experiment'],'threshold':r['threshold_label'],'motion_macro_nrmse':r['motion']['macro_nrmse'],'fit_time_s':r['fit_time_s'],'cpu_p50_ms':r['cpu_batch1_p50_ms'],'cpu_p95_ms':r['cpu_batch1_p95_ms']} for r in m10]
     single=next(r for r in m10 if r['task']=='single_task' and r['threshold_m']==.5);multi=next(r for r in m10 if r['task']=='multitask' and r['threshold_m']==.5);delta=multi['motion']['macro_nrmse']-single['motion']['macro_nrmse']; verdict='does' if comp['transformer_outperforms'] else 'does not'
