@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 import json
@@ -21,7 +22,8 @@ def test_multitask_shapes():
     assert motion.shape==(2,50,6) and score.shape==(2,50) and flag.shape==(2,50)
 
 def test_speed_ood_manifest_has_no_cross_split_raw_coverage():
-    path=Path(__file__).parents[1]/'outputs'/'m8_m12'/'m9_speed_ood_window_manifests.json'
+    output_root=Path(os.environ.get('SHIPMOTION_OUTPUT_ROOT', Path(__file__).parents[1]/'outputs'))
+    path=output_root/'m8_m12'/'m9_speed_ood_window_manifests.json'
     assert path.exists(), 'run M9 before asserting its persisted raw-timestep manifest'
     for fold in json.loads(path.read_text()):
         coverage={s:set() for s in ('train','validation','test')}
